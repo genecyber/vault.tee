@@ -7,167 +7,327 @@
     <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
     <style>
         :root {
-            --primary: #7c3aed;
-            --primary-hover: #6d28d9;
-            --background-color: #1a1a1a;
-            --card-background: #2d2d2d;
-            --text-color: #e5e5e5;
-            --border-color: #404040;
+            --bg: #111;
+            --card: #1a1a1a;
+            --accent: #8b5cf6;
+            --text: #e5e5e5;
+            --dim: #9ca3af;
+            --border: #222;
+        }
+
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            body {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
         }
 
         body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, system-ui, sans-serif;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 0.5rem;
+            font-size: 11px;
+            line-height: 1.2;
         }
 
-        .container {
-            margin-top: 2rem;
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
         }
 
-        .card {
-            background: var(--card-background);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
+        .tabs {
+            display: flex;
+            gap: 0.25rem;
         }
 
-        .output {
-            background: #1a1a1a;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-top: 1rem;
-            white-space: pre-wrap;
-            font-family: 'Fira Code', monospace;
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid var(--border-color);
-        }
-
-        .output:empty {
-            display: none;
-        }
-
-        .success {
-            color: #34d399;
-        }
-
-        .error {
-            color: #f87171;
-        }
-
-        button {
-            background: var(--primary);
+        .tab {
+            background: none;
             border: none;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 6px;
+            color: var(--dim);
+            padding: 0.25rem 1rem;
+            font-size: 0.7rem;
             cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-radius: 2px;
+            min-width: 160px;
+            white-space: nowrap;
         }
 
-        button:hover {
-            background: var(--primary-hover);
+        .tab.active {
+            background: var(--card);
+            color: var(--text);
+            border: 1px solid var(--border);
         }
 
-        input[type="number"],
-        input[type="text"] {
-            background: var(--card-background);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 0.75rem;
-            border-radius: 6px;
-            margin-bottom: 1rem;
-        }
-
-        input[type="number"]:focus,
-        input[type="text"]:focus {
-            border-color: var(--primary);
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .loading {
+        .panel {
             display: none;
-            margin: 1rem 0;
-            color: var(--primary);
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.5rem;
         }
 
-        .loading.active {
+        .panel.active {
             display: block;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .vault-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-top: 0.35rem;
         }
 
-        .loading::after {
-            content: '...';
-            animation: pulse 1.5s infinite;
+        .chain {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 0.35rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .chain:last-child {
+            margin-bottom: 0;
+        }
+
+        .chain-name {
+            color: var(--accent);
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .data-row {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            padding: 0.1rem;
+            padding-right: 1.5rem;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .data-row:hover {
+            background: #1d1d1d;
+        }
+
+        .data-row::after {
+            content: "⎘";
+            position: absolute;
+            right: 0.25rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.6rem;
+            color: var(--dim);
+            opacity: 0;
+        }
+
+        .data-row:hover::after {
+            opacity: 0.5;
+        }
+
+        .data-row.copied::after {
+            content: "✓";
+            color: #10b981;
+            opacity: 1;
+        }
+
+        .data-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            color: var(--dim);
+            width: 70px;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            font-size: 0.6rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .value {
+            font-family: 'SF Mono', Menlo, monospace;
+            background: var(--bg);
+            padding: 0.2rem 0.25rem;
+            border-radius: 2px;
+            font-size: 0.65rem;
+            border: 1px solid var(--border);
+            color: #10b981;
+            line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .data-row:hover .value {
+            border-color: var(--border);
+            background: var(--bg);
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            border-radius: 2px;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            line-height: 1;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .copy {
+            background: none;
+            border: none;
+            padding: 0.1rem 0.2rem;
+            font-size: 0.6rem;
+            color: var(--dim);
+            margin-left: 0.2rem;
+            opacity: 0.5;
+            line-height: 1;
+        }
+
+        .copy:hover {
+            opacity: 1;
+        }
+
+        input {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.35rem;
+            border-radius: 2px;
+            margin-bottom: 0.35rem;
+            font-size: 0.7rem;
+            width: 100%;
+            line-height: 1;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+
+        h1 {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin: 0;
+            line-height: 1;
+        }
+
+        h2 {
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin: 0 0 0.35rem 0;
+            color: var(--dim);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            line-height: 1;
         }
     </style>
 </head>
 <body>
-    <main class="container">
+    <div class="header">
         <h1>Vault Generator</h1>
-        
-        <div class="grid">
-            <div class="card">
-                <h3>Generate New Vaults</h3>
-                <div>
-                    <label for="numVaults">Number of Vaults</label>
-                    <input type="number" id="numVaults" value="1" min="1" max="100">
-                </div>
-                <button onclick="handleGenerateVaults()">Generate Vaults</button>
-                <div id="generateLoading" class="loading">Generating vaults</div>
-                <div id="generateOutput" class="output"></div>
-            </div>
-
-            <div class="card">
-                <h3>Get Vault from Phrase</h3>
-                <div>
-                    <label for="phrase">Mnemonic Phrase</label>
-                    <input type="text" id="phrase" placeholder="Enter your mnemonic phrase">
-                </div>
-                <button onclick="handleGetVault()">Get Vault</button>
-                <div id="phraseLoading" class="loading">Processing phrase</div>
-                <div id="phraseOutput" class="output"></div>
-            </div>
+        <div class="tabs">
+            <button class="tab active" onclick="showPanel('phrase')">Get Vault from Phrase</button>
+            <button class="tab" onclick="showPanel('generate')">Generate New Vaults</button>
         </div>
-    </main>
+    </div>
+
+    <div id="phrase-panel" class="panel active">
+        <input type="text" id="phrase" placeholder="Enter your mnemonic phrase">
+        <button onclick="handleGetVault()">Get Vault</button>
+        <div id="phraseOutput"></div>
+    </div>
+
+    <div id="generate-panel" class="panel">
+        <input type="number" id="numVaults" value="1" min="1" max="100" placeholder="Number of vaults">
+        <button onclick="handleGenerateVaults()">Generate Vaults</button>
+        <div id="generateOutput"></div>
+    </div>
 
     <script src="crypto-lib.bundle.js"></script>
     <script>
         const { CryptoUtils } = window['crypto-lib'];
 
+        function showPanel(panelId) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById(`${panelId}-panel`).classList.add('active');
+            document.querySelector(`[onclick="showPanel('${panelId}')"]`).classList.add('active');
+        }
+
+        async function handleCopy(element, text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                element.classList.add('copied');
+                setTimeout(() => element.classList.remove('copied'), 1000);
+            } catch (error) {
+                console.error('Failed to copy:', error);
+            }
+        }
+
         function appendToOutput(outputId, message, isError = false) {
             const output = document.getElementById(outputId);
+            
+            if (message.startsWith('Generated Addresses:')) {
+                output.innerHTML = '<div class="vault-info">';
+                return;
+            }
+
+            if (message.includes(':')) {
+                const [key, value] = message.split(':').map(s => s.trim());
+                
+                if (['BTC', 'TAP', 'ETH', 'LTC', 'NMC', 'DOGE', 'BCH', 'MONA', 'STX', 'DGB', 'BEL', 'TEZOS'].includes(key)) {
+                    const chain = document.createElement('div');
+                    chain.className = 'chain';
+                    chain.innerHTML = `<div class="chain-name">${key}</div>`;
+                    output.querySelector('.vault-info').appendChild(chain);
+                    return;
+                }
+
+                if (['Address', 'Public Key', 'Private Key'].some(k => message.startsWith(k))) {
+                    const lastChain = output.querySelector('.chain:last-child');
+                    if (lastChain) {
+                        const row = document.createElement('div');
+                        row.className = 'data-row';
+                        const safeValue = value.replace(/'/g, "\\'");
+                        row.innerHTML = `
+                            <div class="label">${key}</div>
+                            <div class="value">${value}</div>
+                        `;
+                        row.onclick = () => handleCopy(row, safeValue);
+                        lastChain.appendChild(row);
+                        return;
+                    }
+                }
+            }
+
+            if (message === '-------------------') return;
+
             const messageDiv = document.createElement('div');
             messageDiv.textContent = message;
-            messageDiv.className = isError ? 'error' : 'success';
+            if (isError) messageDiv.style.color = '#ef4444';
             output.appendChild(messageDiv);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        function setLoading(loadingId, isLoading) {
-            const loading = document.getElementById(loadingId);
-            loading.classList.toggle('active', isLoading);
-        }
-
-        function clearOutput(outputId) {
-            document.getElementById(outputId).innerHTML = '';
         }
 
         async function handleGenerateVaults() {
@@ -177,8 +337,7 @@
                 return;
             }
 
-            clearOutput('generateOutput');
-            setLoading('generateLoading', true);
+            document.getElementById('generateOutput').innerHTML = '';
 
             try {
                 await CryptoUtils.initialize();
@@ -192,8 +351,6 @@
                 }
             } catch (error) {
                 appendToOutput('generateOutput', `Error: ${error.message}`, true);
-            } finally {
-                setLoading('generateLoading', false);
             }
         }
 
@@ -204,8 +361,7 @@
                 return;
             }
 
-            clearOutput('phraseOutput');
-            setLoading('phraseLoading', true);
+            document.getElementById('phraseOutput').innerHTML = '';
 
             try {
                 await CryptoUtils.initialize();
@@ -215,12 +371,14 @@
                 
                 appendToOutput('phraseOutput', 'Generated Addresses:');
                 for (const [network, data] of Object.entries(addresses)) {
-                    appendToOutput('phraseOutput', `${network}: ${data.address}`);
+                    appendToOutput('phraseOutput', `${network}:`);
+                    appendToOutput('phraseOutput', `Address: ${data.address}`);
+                    if (data.publicKey) appendToOutput('phraseOutput', `Public Key: ${data.publicKey}`);
+                    if (data.privateKey) appendToOutput('phraseOutput', `Private Key: ${typeof data.privateKey === 'object' ? JSON.stringify(data.privateKey) : data.privateKey}`);
+                    appendToOutput('phraseOutput', '-------------------');
                 }
             } catch (error) {
                 appendToOutput('phraseOutput', `Error: ${error.message}`, true);
-            } finally {
-                setLoading('phraseLoading', false);
             }
         }
     </script>
