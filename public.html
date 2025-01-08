@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Generator</title>
+    <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.5.10/css/pico.min.css">
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-hover: #6d28d9;
+            --background-color: #1a1a1a;
+            --card-background: #2d2d2d;
+            --text-color: #e5e5e5;
+            --border-color: #404040;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .container {
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .output {
+            background: #1a1a1a;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            white-space: pre-wrap;
+            font-family: 'Fira Code', monospace;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+
+        .output:empty {
+            display: none;
+        }
+
+        .success {
+            color: #34d399;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s ease;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .loading {
+            display: none;
+            margin: 1rem 0;
+            color: var(--primary);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading::after {
+            content: '...';
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>Vault Generator</h1>
+        
+        <div class="grid">
+            <div class="card">
+                <h3>Generate New Vaults</h3>
+                <div>
+                    <label for="numVaults">Number of Vaults</label>
+                    <input type="number" id="numVaults" value="1" min="1" max="100">
+                </div>
+                <button onclick="handleGenerateVaults()">Generate Vaults</button>
+                <div id="generateLoading" class="loading">Generating vaults</div>
+                <div id="generateOutput" class="output"></div>
+            </div>
+
+            <div class="card">
+                <h3>Get Vault from Phrase</h3>
+                <div>
+                    <label for="phrase">Mnemonic Phrase</label>
+                    <input type="text" id="phrase" placeholder="Enter your mnemonic phrase">
+                </div>
+                <button onclick="handleGetVault()">Get Vault</button>
+                <div id="phraseLoading" class="loading">Processing phrase</div>
+                <div id="phraseOutput" class="output"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../dist/crypto-lib.bundle.js"></script>
+    <script>
+        const { CryptoUtils } = window['crypto-lib'];
+
+        function appendToOutput(outputId, message, isError = false) {
+            const output = document.getElementById(outputId);
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.className = isError ? 'error' : 'success';
+            output.appendChild(messageDiv);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function setLoading(loadingId, isLoading) {
+            const loading = document.getElementById(loadingId);
+            loading.classList.toggle('active', isLoading);
+        }
+
+        function clearOutput(outputId) {
+            document.getElementById(outputId).innerHTML = '';
+        }
+
+        async function handleGenerateVaults() {
+            const numVaults = parseInt(document.getElementById('numVaults').value);
+            if (isNaN(numVaults) || numVaults < 1) {
+                appendToOutput('generateOutput', 'Please enter a valid number of vaults', true);
+                return;
+            }
+
+            clearOutput('generateOutput');
+            setLoading('generateLoading', true);
+
+            try {
+                await CryptoUtils.initialize();
+                
+                for (let i = 0; i < numVaults; i++) {
+                    const vault = await CryptoUtils.generateMnemonic();
+                    appendToOutput('generateOutput', `Vault ${i + 1}:`);
+                    appendToOutput('generateOutput', `Phrase: ${vault.phrase}`);
+                    appendToOutput('generateOutput', `Entropy: ${vault.entropy}`);
+                    appendToOutput('generateOutput', '-------------------');
+                }
+            } catch (error) {
+                appendToOutput('generateOutput', `Error: ${error.message}`, true);
+            } finally {
+                setLoading('generateLoading', false);
+            }
+        }
+
+        async function handleGetVault() {
+            const phrase = document.getElementById('phrase').value.trim();
+            if (!phrase) {
+                appendToOutput('phraseOutput', 'Please enter a mnemonic phrase', true);
+                return;
+            }
+
+            clearOutput('phraseOutput');
+            setLoading('phraseLoading', true);
+
+            try {
+                await CryptoUtils.initialize();
+                
+                const networks = ['BTC', 'TAP', 'ETH', 'LTC', 'NMC', 'DOGE', 'BCH', 'MONA', 'STX', 'DGB', 'BEL', 'TEZOS'];
+                const addresses = await CryptoUtils.generateMultiNetworkAddresses(phrase, networks);
+                
+                appendToOutput('phraseOutput', 'Generated Addresses:');
+                for (const [network, data] of Object.entries(addresses)) {
+                    appendToOutput('phraseOutput', `${network}: ${data.address}`);
+                }
+            } catch (error) {
+                appendToOutput('phraseOutput', `Error: ${error.message}`, true);
+            } finally {
+                setLoading('phraseLoading', false);
+            }
+        }
+    </script>
+</body>
+</html>
